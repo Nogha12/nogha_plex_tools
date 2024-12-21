@@ -3,7 +3,6 @@ import re
 import subprocess
 import json
 import pycountry
-from plex_server_utilities import PlexInfo
 
 # The pattern for global IDs that input must match
 global_id_pattern = re.compile(r'^\d+:\d+$')
