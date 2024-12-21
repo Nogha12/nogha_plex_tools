@@ -98,6 +98,27 @@ def get_tracks_info(file_path, file_id=0):
     except Exception as e:
         print(f"Error extracting info from {file_path}: {e}")
         return None
+    
+def get_episode_number_from_string(search_string):
+    """Search the given string to see if it contains an episode number and return it if so."""
+    # Check the basic case of there containing the letter 'e' followed by a 2-3 digit number
+    match = re.search(r'\bs\d{1,2}e(\d{1,3})', search_string, re.IGNORECASE)
+    if match:
+        return int(match.group(1))
+    
+    # Check for cases where the episode number follows "episode" or "ep" separated by a space, dot, dash, underscore, or nothing
+    match = re.search(r'(episode|ep|\be)[ _.-]?(\d{1,3})', search_string, re.IGNORECASE)
+    if match:
+        return int(match.group(2))
+    
+    # Check for the case where there is only a single number in the string
+    matches = re.findall(r'\b(\d{1,3})\b', search_string)
+    if len(matches) == 1:
+        return int(match.group(1))
+    
+    ## Consider adding more checks here
+
+    return None
 
 
 def get_identifying_info_from_tracks_info(tracks_info):
