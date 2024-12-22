@@ -301,7 +301,13 @@ def get_tracks_to_mux(main_files):
 
         # Check if the file exists in Plex and get the episode number
         plex_info = plex_agent.get_plex_info(file)
-        episode_number = int(plex_info['episode'])
+        if plex_info:
+            try:
+                episode_number = int(plex_info['episode'])
+            except KeyError:
+                episode_number = None
+        else:
+            episode_number = None
 
         matching_files = []
 
@@ -317,10 +323,11 @@ def get_tracks_to_mux(main_files):
                     continue
 
                 # Check if the episode number is the same as the main file
-                other_file_episode_number = get_episode_number_from_string(other_file_match_name)
-                if other_file_episode_number == episode_number:
-                    matching_files.append(os.path.join(directory, other_file))
-                    continue
+                if episode_number:
+                    other_file_episode_number = get_episode_number_from_string(other_file_match_name)
+                    if other_file_episode_number == episode_number:
+                        matching_files.append(os.path.join(directory, other_file))
+                        continue
 
         # Check all subdirectories for directories with the same name as the match name
         for root, dirs, files in os.walk(directory):
