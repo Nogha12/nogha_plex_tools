@@ -12,7 +12,7 @@ def update_episode_data(directory, json_file):
     with open(json_file, 'r') as f:
         episode_data = json.load(f)
 
-    mkv_files = get_mkv_files_from_directory(directory)
+    mkv_files = get_video_files_from_directory(directory)
     
     for file in mkv_files:
         episode_number = f'{extract_episode_number(file)}'  # Define a function to extract episode number from filename

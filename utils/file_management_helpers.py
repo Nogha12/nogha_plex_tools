@@ -11,6 +11,12 @@ def is_valid_language_code(lang_code):
     try:
         # Attempt to get the language by the 3-letter code
         language = pycountry.languages.get(alpha_3=lang_code)
+        if not language:
+            # If not found, try to get the language by the 2-letter code
+            language = pycountry.languages.get(alpha_2=lang_code)
+        elif not language:
+            # If not found, try to get the language by the name
+            language = pycountry.languages.get(name=lang_code)
         return language is not None
     except KeyError:
         return False
@@ -21,7 +27,12 @@ def list_tracks(tracks_info):
         tracks_info = [tracks_info]
 
     for track in tracks_info:
-        print(f"  ID: {track['file_id']}:{track['id']}, Type: {track['type']}, Language: {track['language']}, Codec: {track['codec']}, Name: {track['track_name']}")
+        track_info_sring = f"  ID: {track['file_id']}:{track['id']}, Type: {track['type']}, Language: {track['language']}, Codec: {track['codec']}"
+        if track['track_name'] != 'N/A':
+            track_info_sring += f", Name: {track['track_name']}"
+        else:
+            track_info_sring += f", Source filename: {track['file_name']}"
+        print(track_info_sring)
 
 def get_file_extension(codec):
     # Dictionary mapping codecs to their corresponding file extensions
@@ -44,6 +55,7 @@ def get_file_extension(codec):
         "H.265": "hevc",
         "HEVC": "hevc",
         "AV1": "av1",
+        "MPEG-4p2": "mp4"
         # Add more mappings as needed
     }
 
@@ -77,6 +89,7 @@ def get_tracks_info(file_path, file_id=0):
         for number, track in enumerate(data['tracks'], start=1):
             track_info = {
                 'file_id': file_id,
+                'file_name': os.path.basename(file_path),
                 'number': number,
                 'id': track['id'],
                 'type': track['type'],
@@ -101,12 +114,12 @@ def get_tracks_info(file_path, file_id=0):
     
 def get_episode_number_from_string(search_string):
     """Search the given string to see if it contains an episode number and return it if so."""
-    # Check the basic case of there containing the letter 'e' followed by a 2-3 digit number
+    # Check the basic case where there is a string of the form sXXeYY
     match = re.search(r'\bs\d{1,2}e(\d{1,3})', search_string, re.IGNORECASE)
     if match:
         return int(match.group(1))
     
-    # Check for cases where the episode number follows "episode" or "ep" separated by a space, dot, dash, underscore, or nothing
+    # Check for cases where the episode number follows "episode", "ep", or 'e' separated by a space, dot, dash, underscore, or nothing
     match = re.search(r'(episode|ep|\be)[ _.-]?(\d{1,3})', search_string, re.IGNORECASE)
     if match:
         return int(match.group(2))
@@ -132,36 +145,37 @@ def get_matching_files_from_directory(directory):
     """Analyze .mkv files in the directory and its subdirectories and return a list of files with matching track structures."""
     mkv_files = get_mkv_files_from_directory(directory)
 
-    if not mkv_files:
-        print("No .mkv files were found in the directory.")
+    if not video_files:
+        print("No .mkv, .mp4, or .avi files were found in the directory.")
         return
 
-    first_file_info = get_tracks_info(mkv_files[0])
+    first_file_info = get_tracks_info(video_files[0])
     if first_file_info is None:
-        print(f"Error reading tracks info from {mkv_files[0]}. Aborting.")
+        print(f"Error reading tracks info from {video_files[0]}. Aborting.")
         return
     
-    print(f"Checking that all files have the same track structure as the following: {os.path.basename(mkv_files[0])}")
+    print(f"Checking that all files have the same track structure as the following: {os.path.basename(video_files[0])}")
     expected_file_info = get_identifying_info_from_tracks_info(first_file_info)
 
-    matching_mkv_files = [mkv_files[0]]
-    for file_path in mkv_files[1:]:
+    matching_video_files = [video_files[0]] # intialize with the first file
+    for file_path in video_files[1:]:
         file_info = get_tracks_info(file_path)
         if file_info is None:
             continue
         
         if get_identifying_info_from_tracks_info(file_info) == expected_file_info:
-            matching_mkv_files.append(file_path)
+            matching_video_files.append(file_path)
         else:
             print(f"File {os.path.basename(file_path)} has a different track structure or order of language tags.")
 
-    print(f"{len(matching_mkv_files)} matching .mkv files have been found.")
+    print(f"{len(matching_video_files)} matching video files have been found.")
 
-    return matching_mkv_files
+    return matching_video_files
 
-def get_mkv_files_from_directory(directory):
-    mkv_files = []
+def get_video_files_from_directory(directory):
+    """Return a list of all .mkv, .mp4, or .avi files in the given directory."""
+    video_files = []
     for file in os.listdir(directory):
-        if file.endswith('.mkv'):
-            mkv_files.append(os.path.join(directory, file))
-    return mkv_files
+        if file.endswith('.mkv') or file.endswith('.mp4') or file.endswith('.avi'):
+            video_files.append(os.path.join(directory, file))
+    return video_files

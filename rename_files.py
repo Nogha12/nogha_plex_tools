@@ -105,11 +105,11 @@ def get_files_information(directory):
     # Get the paths of all the mkv files to rename
     mkv_files_to_rename = get_mkv_files_from_directory(directory)
 
-    if not mkv_files_to_rename:
+    if not video_files_to_rename:
         return None
 
-    mkv_files_info = []
-    for filepath in mkv_files_to_rename:
+    video_files_info = []
+    for filepath in video_files_to_rename:
         # From Plex, grab the episode number, season number, and title
         plex_info = plex_agent.get_plex_info(filepath)
         # Using mkvmerge, grab the video codec and resolution
@@ -130,10 +130,10 @@ def get_files_information(directory):
             print("Error most likely caused by Plex info not being updated. Make sure the files are known to Plex and parsed by the correct agent.")
             return
 
-        mkv_files_info.append(file_info)
+        video_files_info.append(file_info)
         print(f"Successfully retreived information for {os.path.basename(filepath)}.")
     
-    return mkv_files_info
+    return video_files_info
 
 
 def main(args):
