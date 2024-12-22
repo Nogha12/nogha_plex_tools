@@ -249,12 +249,12 @@ def mux_files_into_mkv(file_matches, attachments=[], force_language_prompt=False
     for file_paths in file_matches:
         # Determine the new output path for remuxed files
         for file_path in file_paths:
-            if file_path.lower().endswith('.mkv'):
-                mkv_file_path = file_path
-                break # break here because the primary MKV should be listed first
-        new_dir = os.path.join(os.path.dirname(mkv_file_path), 'remux')
+            if file_path.lower().endswith('.mkv') or file_path.lower().endswith('.mp4') or file_path.lower().endswith('.avi'):
+                main_file_path = file_path
+                break # break here because the primary video file should be listed before other video files.
+        new_dir = os.path.join(os.path.dirname(main_file_path), 'remux')
         os.makedirs(new_dir, exist_ok=True)
-        output_path = os.path.join(new_dir, os.path.basename(mkv_file_path))
+        output_path = os.path.join(new_dir, os.path.basename(main_file_path))
         
         # Check if reordering is needed and remux
         if get_identifying_info_from_tracks_info(tracks_template) != get_identifying_info_from_tracks_info(get_tracks_info(file_paths[0])):
@@ -268,24 +268,77 @@ def mux_files_into_mkv(file_matches, attachments=[], force_language_prompt=False
 
     print("Finished remuxing files.")
 
-def get_matching_tracks_mkvs(mkv_files):
-    """Return a list of lists of files with the same base name."""
+def path_to_match_name(file_path):
+    """Take a full file path and strip away the directory, extension, and any extra tags to get a match name."""
+    # Remove the directory
+    base_name = os.path.basename(file_path)
+    # Remove the extension
+    match_name = os.path.splitext(base_name)[0]
+
+    return string_to_match_name(match_name)
+
+def string_to_match_name(string_to_convert):
+    """Take a full file path and strip away the directory, extension, and any extra tags to get a match name."""
+    # Remove tags inside of brackets
+    match_name = re.sub(r'\[.*?\]', '', string_to_convert).strip()
+    # Remove additional tags
+    tags = re.findall(r'\.\w{2,}(\.|$)', match_name)
+    for tag in tags:
+        if is_valid_language_code(tag[1:]) or tag[1:] == 'forced':
+            match_name = match_name.replace(tag, '')
+
+    return match_name
+
+def get_tracks_to_mux(main_files):
+    """Return a list of lists of files that should be muxed together."""
+    plex_agent = PlexInfo()
     file_matches = []
-    for mkv_file in mkv_files:
-        directory = os.path.dirname(mkv_file)
-        match_name = os.path.basename(mkv_file)
-        match_name = os.path.splitext(match_name)[0].split('.')[0]
-        match_name = re.sub(r'\[.*?\]', '', match_name).strip()
+    for file in main_files:
+        directory = os.path.dirname(file)
+
+        # Get a "match name" for the file which consists of its base name without the extension and any extra tags
+        match_name = path_to_match_name(file)
+
+        # Check if the file exists in Plex and get the episode number
+        plex_info = plex_agent.get_plex_info(file)
+        episode_number = int(plex_info['episode'])
+
         matching_files = []
+
+        # Loop through the files in the directory of the current file to find matches
         for other_file in os.listdir(directory):
-            file_match_name = os.path.basename(other_file)
-            spit_filename = os.path.splitext(file_match_name)
-            file_extension = spit_filename[1]
-            file_match_name = spit_filename[0].split('.')[0]
-            file_match_name = re.sub(r'\[.*?\]', '', file_match_name).strip()
-            if is_muxable_extension(file_extension) and file_match_name == match_name:
-                matching_files.append(os.path.join(directory, other_file))
+            # Check if the file is muxable
+            file_extension = os.path.splitext(other_file)[1]
+            if is_muxable_extension(file_extension):
+                # Check if the match name is the same as the main file
+                other_file_match_name = path_to_match_name(other_file)
+                if other_file_match_name == match_name:
+                    matching_files.append(os.path.join(directory, other_file))
+                    continue
+
+                # Check if the episode number is the same as the main file
+                other_file_episode_number = get_episode_number_from_string(other_file_match_name)
+                if other_file_episode_number == episode_number:
+                    matching_files.append(os.path.join(directory, other_file))
+                    continue
+
+        # Check all subdirectories for directories with the same name as the match name
+        for root, dirs, files in os.walk(directory):
+            for dir in dirs:
+                if string_to_match_name(dir) == match_name:
+                    # Append all files in the folder to the matching_files list
+                    for file in os.listdir(os.path.join(root, dir)):
+                        matching_files.append(os.path.join(root, dir, file))
+
         file_matches.append(matching_files)
+
+    # Verify that the matching_files lists are all the same length
+    for matching_files in file_matches:
+        if len(matching_files) != len(file_matches[0]):
+            print("Error: The file matches lists are not all the same length.")
+            return
+    print(f'Found {len(file_matches[0])} matching files for each main file.')
+    
     return file_matches
 
 def main(args):
@@ -294,8 +347,9 @@ def main(args):
     force_language_prompt = args.force_language_prompt
     ask_for_additional_flags = args.prompt_additional_tags
 
-    mkv_files_to_modify = get_matching_files_from_directory(directory)
-    file_matches = get_matching_tracks_mkvs(mkv_files_to_modify)
+    # mkv_files_to_modify = get_matching_files_from_directory(directory)
+    main_files = get_matching_files_from_directory(directory)
+    file_matches = get_tracks_to_mux(main_files)
     attachments = get_font_attachments(directory)
 
     if second_directory:

@@ -73,7 +73,7 @@ def main(args):
     if language == 'und':
         language = None
 
-    mkv_files_from_which_to_extract = get_mkv_files_from_directory(directory)
+    mkv_files_from_which_to_extract = get_video_files_from_directory(directory)
     if track_type == 'subtitles':
         extract_subtitles_from_files(mkv_files_from_which_to_extract, language=language)
     elif track_type == 'audio':

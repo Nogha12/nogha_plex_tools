@@ -8,7 +8,7 @@ def save_episode_data(directory):
     plex_info = PlexInfo()
     data = {}
 
-    mkv_files = get_mkv_files_from_directory(directory)
+    mkv_files = get_video_files_from_directory(directory)
 
     for file in mkv_files:
         print(f'Getting info from Plex for {os.path.basename(file)}')

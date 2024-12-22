@@ -7,7 +7,7 @@ from utils.file_management_helpers import *
 def main(args):
     directory = args.directory
     
-    mkv_files = get_mkv_files_from_directory(directory)
+    mkv_files = get_video_files_from_directory(directory)
 
     print(f'Checking the integrity of {len(mkv_files)} file(s).')
     invalid_files = []

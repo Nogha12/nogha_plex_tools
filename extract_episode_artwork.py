@@ -9,7 +9,7 @@ def extract_episode_artworks(directory):
     # Create a PlexInfo object from which to extract information about each file from Plex
     plex_agent = PlexInfo()
 
-    mkv_files = helpers.get_mkv_files_from_directory(directory)
+    mkv_files = helpers.get_video_files_from_directory(directory)
 
     for file in mkv_files:
         # Create path for the artwork
