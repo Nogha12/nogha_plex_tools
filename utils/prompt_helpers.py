@@ -13,7 +13,7 @@ def prompt_for_flag(valid_ids, enforce_flag=False, flag_is_exclusive=False, flag
             try:
                 flag_ids = input().strip().split(',')
                 flag_ids = [id.strip() for id in flag_ids if id]
-                if len(flag_ids) >= 1 and not flag_is_exclusive:
+                if (not flag_is_exclusive and len(flag_ids) >= 1) or (flag_is_exclusive and len(flag_ids) == 1):
                     for id in flag_ids:
                         if not bool(global_id_pattern.match(id)):
                             print(f"The ID provided, {id}, is not of the form int:int. Try again: ")
