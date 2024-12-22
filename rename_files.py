@@ -25,7 +25,7 @@ def is_valid_resolution(text):
     return bool(pattern.match(text))
 
 def is_valid_codec(text):
-    known_codecs = ["HEVC", "AV1", "H.264"] # add more as needed
+    known_codecs = ["HEVC", "AV1", "H.264", "MPEG-4p2"] # add more as needed
     return text in known_codecs
 
 def rename_files(episode_files_data, series_name, encoder_name):
@@ -98,12 +98,15 @@ def rename_files(episode_files_data, series_name, encoder_name):
             else: return
         os.rename(file_path, output_path)
 
-def get_files_information(directory):
+def get_files_information(directory, do_recursive=False):
     """Create a list of .mkv file path names along with episode number, season number, title, resolution, and codec"""
     # Create a PlexInfo object from which to extract information about each file from Plex
     plex_agent = PlexInfo()
     # Get the paths of all the mkv files to rename
-    mkv_files_to_rename = get_mkv_files_from_directory(directory)
+    if do_recursive:
+        video_files_to_rename = get_video_files_from_directory_and_subdirectories(directory)
+    else:
+        video_files_to_rename = get_video_files_from_directory(directory)
 
     if not video_files_to_rename:
         return None
@@ -138,10 +141,11 @@ def get_files_information(directory):
 
 def main(args):
     directory = args.directory
+    do_recursive = args.recursive
 
     # Get the paths of all MKV files in the directory along with relevant information
     print(f"Scanning .mkv files in {directory}. . .")
-    files_info = get_files_information(directory)
+    files_info = get_files_information(directory, do_recursive=do_recursive)
 
     if not files_info:
         print("No MKV files found in the directory.")
@@ -171,6 +175,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='mkvrenamer', description="Rename the MKV files in the directory according to the Plex standard.")
     parser.add_argument('directory', nargs='?', default=os.getcwd(), help='Directory to process')
+    parser.add_argument('-r', '--recursive', action='store_true', help='Recursively search the directory for video files.')
     
     args = parser.parse_args()
     main(args)

@@ -141,9 +141,12 @@ def get_identifying_info_from_tracks_info(tracks_info):
     ]
     return identifying_tracks_info
     
-def get_matching_files_from_directory(directory):
-    """Analyze .mkv files in the directory and its subdirectories and return a list of files with matching track structures."""
-    mkv_files = get_mkv_files_from_directory(directory)
+def get_matching_files_from_directory(directory, recursive=False):
+    """Analyze video files in the directory and its subdirectories and return a list of video files with matching track structures."""
+    if recursive:
+        video_files = get_video_files_from_directory_and_subdirectories(directory)
+    else:
+        video_files = get_video_files_from_directory(directory)
 
     if not video_files:
         print("No .mkv, .mp4, or .avi files were found in the directory.")
@@ -178,4 +181,13 @@ def get_video_files_from_directory(directory):
     for file in os.listdir(directory):
         if file.endswith('.mkv') or file.endswith('.mp4') or file.endswith('.avi'):
             video_files.append(os.path.join(directory, file))
+    return video_files
+
+def get_video_files_from_directory_and_subdirectories(directory):
+    """Return a list of all .mkv, .mp4, or .avi files in the given directory and its subdirectories."""
+    video_files = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.endswith('.mkv') or file.endswith('.mp4') or file.endswith('.avi'):
+                video_files.append(os.path.join(root, file))
     return video_files
