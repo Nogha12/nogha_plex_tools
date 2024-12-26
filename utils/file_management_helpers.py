@@ -31,7 +31,12 @@ def list_tracks(tracks_info):
         if track['track_name'] != 'N/A':
             track_info_sring += f", Name: {track['track_name']}"
         else:
-            track_info_sring += f", Source filename: {track['file_name']}"
+            # If another track file name has the same base name, include parent directory in the file name
+            file_name = os.path.basename(track['file_name'])
+            if any(file_name in os.path.basename(other_track['file_name']) for other_track in tracks_info if other_track['file_id'] != track['file_id']):
+                file_name = os.path.join(os.path.basename(os.path.dirname(track['file_name'])), file_name)
+
+            track_info_sring += f", Source filename: {file_name}"
         print(track_info_sring)
 
 def get_file_extension(codec):
@@ -89,7 +94,7 @@ def get_tracks_info(file_path, file_id=0):
         for number, track in enumerate(data['tracks'], start=1):
             track_info = {
                 'file_id': file_id,
-                'file_name': os.path.basename(file_path),
+                'file_name': file_path,
                 'number': number,
                 'id': track['id'],
                 'type': track['type'],
