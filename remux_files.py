@@ -175,7 +175,7 @@ def add_matches_from_second_directory(file_matches, second_directory):
 
     return file_matches
 
-def mux_files(file_paths, tracks_info, output_path, attachments=[]):
+def mux_files(file_paths, tracks_info, output_path, attachments=[], subtitles_delay=0):
     """Remux the files to reorder tracks using mkvmerge."""
     # Separate the different types of tracks
     video_tracks_info = [track for track in tracks_info if track['type'] == 'video']
@@ -209,6 +209,10 @@ def mux_files(file_paths, tracks_info, output_path, attachments=[]):
             command += f' --no-audio'
         if subtitles_tracks_ids:
             command += f' --subtitle-tracks {subtitles_tracks_ids}'
+            if subtitles_delay != 0:
+                for track in subtitles_tracks_info:
+                    if track['file_id'] == file_id:
+                        command += f' --sync {track["id"]}:{subtitles_delay}'
         else:
             command += f' --no-subtitles'
         command += f' "{file_path}"'
@@ -223,7 +227,7 @@ def get_font_attachments(directory):
             font_attchments.append(os.path.join(directory, file))
     return font_attchments
 
-def mux_files_into_mkv(file_matches, attachments=[], force_language_prompt=False, ask_for_additional_flags=False):
+def mux_files_into_mkv(file_matches, attachments=[], force_language_prompt=False, ask_for_additional_flags=False, subtitles_delay=0):
     first_matching_files = file_matches[0]
 
     # This is a list of tracks info for all the tracks to merge
@@ -256,9 +260,12 @@ def mux_files_into_mkv(file_matches, attachments=[], force_language_prompt=False
         os.makedirs(new_dir, exist_ok=True)
         output_path = os.path.join(new_dir, os.path.basename(main_file_path))
         
-        # Check if reordering is needed and remux
-        if get_identifying_info_from_tracks_info(tracks_template) != get_identifying_info_from_tracks_info(get_tracks_info(file_paths[0])):
-            mux_files(file_paths, tracks_template, output_path, attachments=attachments)
+        # Check if remuxing is needed
+        if (
+            (get_identifying_info_from_tracks_info(tracks_template) != get_identifying_info_from_tracks_info(get_tracks_info(file_paths[0]))) 
+            or (subtitles_delay != 0)
+        ):
+            mux_files(file_paths, tracks_template, output_path, attachments=attachments, subtitles_delay=subtitles_delay)
         else:
             # If no reordering is needed, just copy the file
             copyfile(file_paths[0], output_path)
@@ -353,6 +360,7 @@ def main(args):
     second_directory = args.second_directory
     force_language_prompt = args.force_language_prompt
     ask_for_additional_flags = args.prompt_additional_tags
+    subtitles_delay = args.delay_subtitles
 
     # mkv_files_to_modify = get_matching_files_from_directory(directory)
     main_files = get_matching_files_from_directory(directory)
@@ -362,7 +370,7 @@ def main(args):
     if second_directory:
         file_matches = add_matches_from_second_directory(file_matches, second_directory)
 
-    mux_files_into_mkv(file_matches, attachments=attachments, force_language_prompt=force_language_prompt, ask_for_additional_flags=ask_for_additional_flags)
+    mux_files_into_mkv(file_matches, attachments=attachments, force_language_prompt=force_language_prompt, ask_for_additional_flags=ask_for_additional_flags, subtitles_delay=subtitles_delay)
 
 
 if __name__ == "__main__":
@@ -371,6 +379,7 @@ if __name__ == "__main__":
     parser.add_argument('-d2', '--second-directory', default=None, help='Directory of numbered MKV files to merge')
     parser.add_argument('-l', '--force-language-prompt', action='store_true', help='Forces the program to prompt the user to input languages for each track.')
     parser.add_argument('-a', '--prompt-additional-tags', action='store_true', help='Forces the program to prompt the user to input all optional tags for each track.')
+    parser.add_argument('-d', '--delay-subtitles', default=0, type=int, help='Delay the subtitles by the given number of milliseconds.')
     
     args = parser.parse_args()
     main(args)
