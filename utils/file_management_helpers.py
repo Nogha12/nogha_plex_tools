@@ -132,7 +132,7 @@ def get_episode_number_from_string(search_string):
     # Check for the case where there is only a single number in the string
     matches = re.findall(r'\b(\d{1,3})\b', search_string)
     if len(matches) == 1:
-        return int(match.group(1))
+        return int(matches[0])
     
     ## Consider adding more checks here
 
