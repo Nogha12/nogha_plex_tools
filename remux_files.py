@@ -119,6 +119,10 @@ def prompt_for_new_tracks_info(list_of_tracks_info, force_language_prompt=False,
     video_tracks_info[0]['flag_commentary'] = False
     video_tracks_info[0]['flag_hearing_impaired'] = False
     video_tracks_info[0]['flag_text_descriptions'] = False
+    if force_language_prompt:
+        video_tracks_info = prompt_for_tracks_languages(video_tracks_info, force_language_prompt=True)
+    else:
+        video_tracks_info[0]['language'] = 'und'
     video_tracks_info = prompt_for_tracks_names(video_tracks_info)
 
     # AUDIO TRACKS
@@ -213,6 +217,7 @@ def mux_files(file_paths, tracks_info, output_path, attachments=[], subtitles_de
                 for track in subtitles_tracks_info:
                     if track['file_id'] == file_id:
                         command += f' --sync {track["id"]}:{subtitles_delay}'
+                        command += f' --chapter-sync {subtitles_delay}'
         else:
             command += f' --no-subtitles'
         command += f' "{file_path}"'
@@ -253,7 +258,7 @@ def mux_files_into_mkv(file_matches, attachments=[], force_language_prompt=False
     for file_paths in file_matches:
         # Determine the new output path for remuxed files
         for file_path in file_paths:
-            if file_path.lower().endswith('.mkv') or file_path.lower().endswith('.mp4') or file_path.lower().endswith('.avi'):
+            if file_path.lower().endswith(('.mkv', '.mp4', '.avi')):
                 main_file_path = file_path
                 break # break here because the primary video file should be listed before other video files.
         new_dir = os.path.join(os.path.dirname(main_file_path), 'remux')
