@@ -46,6 +46,9 @@ def rename_files(episode_files_data, series_name, encoder_name):
         else:
             title = plex_title
 
+        # Replace any instances of the literal string ' / ' with '--'
+        title = title.replace(' / ', '--')
+
         if not is_valid_title(title):
             print(f"Title \"{title}\" contains characters not valid for a file name or contains a space-dash-space. Manual entry required.")
             while True:

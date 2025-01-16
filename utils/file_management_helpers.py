@@ -189,10 +189,11 @@ def get_video_files_from_directory(directory):
     return video_files
 
 def get_video_files_from_directory_and_subdirectories(directory):
-    """Return a list of all .mkv, .mp4, or .avi files in the given directory and its subdirectories."""
     video_files = []
-    for root, _, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory):
+        # Skip directories that start with a period
+        dirs[:] = [directory for directory in dirs if not directory.startswith('.')]
         for file in files:
-            if file.endswith('.mkv') or file.endswith('.mp4') or file.endswith('.avi'):
+            if file.endswith(('.mp4', '.mkv', '.avi')):  # Add other video file extensions as needed
                 video_files.append(os.path.join(root, file))
     return video_files

@@ -22,11 +22,11 @@ def extract_subtitles_from_files(mkv_files, language=None):
                 print(f"Could not find file extension for {track['codec']}, skipping. . .")
                 continue
 
-            language = track['language'] if track['language'] != 'und' else None
+            track_language = track['language'] if track['language'] != 'und' else None
             is_forced = track['forced_track']
             track_id = track['id']
 
-            output_path = os.path.splitext(file_path)[0] + (f'.{language}' if language else '') + ('.forced' if is_forced else '')
+            output_path = os.path.splitext(file_path)[0] + (f'.{track_language}' if track_language else '') + ('.forced' if is_forced else '')
             if (output_path + f'.{file_extension}') in output_paths:
                 output_path += f'.{track_id}'
             output_path += f'.{file_extension}'
@@ -56,8 +56,8 @@ def extract_audio_from_files(mkv_files, language=None):
                 print(f"Could not find file extension for {track['codec']}, skipping. . .")
                 continue
 
-            language = track['language'] if track['language'] != 'und' else None
-            output_path = os.path.splitext(file_path)[0] + (('.' + language) if language else '') + ('.' + file_extension)
+            track_language = track['language'] if track['language'] != 'und' else None
+            output_path = os.path.splitext(file_path)[0] + (('.' + track_language) if track_language else '') + ('.' + file_extension)
             track_id = track['id']
 
             command = f'mkvextract tracks "{file_path}" {track_id}:"{output_path}"'
