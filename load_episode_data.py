@@ -15,7 +15,7 @@ def update_episode_data(directory, json_file):
     mkv_files = get_video_files_from_directory(directory)
     
     for file in mkv_files:
-        episode_number = f'{extract_episode_number(file)}'  # Define a function to extract episode number from filename
+        episode_number = f'{get_episode_number_from_string(os.path.basename(file))}'
         if episode_number in episode_data:
             print(f"Updating Plex info for {os.path.basename(file)}")
             update_plex_info(file, episode_data[episode_number], plex_info)
@@ -38,15 +38,6 @@ def update_plex_info(file_path, episode_info, plex_info):
                             })
                             episode.reload()
                             print(f"Updated info for: {file_path}")
-
-def extract_episode_number(filename):
-    # Extract episode number from filename using regex or string manipulation
-    # For example, using regex:
-    pattern = re.compile(r"S\d{2}E(\d{3})")
-    match = pattern.search(filename)
-    if match:
-        return int(match.group(1))
-    return None
 
 def main(args):
     directory = args.directory
