@@ -99,7 +99,15 @@ def rename_files(episode_files_data, series_name, encoder_name):
             if user_input in ['y', 'yes']:
                 renaming_is_approved = True
             else: return
-        os.rename(file_path, output_path)
+        
+        while True:
+            try:
+                os.rename(file_path, output_path)
+                break
+            except PermissionError as e:
+                print(f"Error: {e}")
+                print("File cannot be renamed because it is being used by another program. Close the program and continue.")
+                input("Press Enter to continue . . .")
 
 def get_files_information(directory, do_recursive=False):
     """Create a list of .mkv file path names along with episode number, season number, title, resolution, and codec"""
