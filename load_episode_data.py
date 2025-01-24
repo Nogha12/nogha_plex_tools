@@ -5,20 +5,28 @@ import re
 from utils.plex_server_utilities import PlexInfo
 from utils.file_management_helpers import *
 
-def update_episode_data(directory, json_file):
+def update_episode_data(directory, json_file, do_recursive=False):
     plex_info = PlexInfo()
     
     # Load episode info from JSON file
     with open(json_file, 'r') as f:
         episode_data = json.load(f)
 
-    mkv_files = get_video_files_from_directory(directory)
+    if do_recursive:
+        mkv_files = get_video_files_from_directory_and_subdirectories(directory)
+    else:
+        mkv_files = get_video_files_from_directory(directory)
     
     for file in mkv_files:
-        episode_number = f'{get_episode_number_from_string(os.path.basename(file))}'
-        if episode_number in episode_data:
+        episode_number = get_episode_number_from_string(os.path.basename(file))
+        if episode_number is None:
+            continue
+        else:
+            episode_string = f'{episode_number}'
+            
+        if episode_string in episode_data:
             print(f"Updating Plex info for {os.path.basename(file)}")
-            update_plex_info(file, episode_data[episode_number], plex_info)
+            update_plex_info(file, episode_data[episode_string], plex_info)
 
 def update_plex_info(file_path, episode_info, plex_info):
     # Retrieve the Plex library and find the episode by file path
@@ -42,14 +50,16 @@ def update_plex_info(file_path, episode_info, plex_info):
 def main(args):
     directory = args.directory
     json_file = args.json_file
+    do_recursive = args.recursive
 
     print("Updating episode information in Plex. . .")
-    update_episode_data(directory, json_file)
+    update_episode_data(directory, json_file, do_recursive=do_recursive)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='updateepisodedata', description="Update episode data in Plex from JSON file.")
     parser.add_argument('directory', help='Directory containing the episodes')
     parser.add_argument('json_file', help='JSON file with episode data')
+    parser.add_argument('-r', '--recursive', action='store_true', help='Recursively search the directory for episodes.')
 
     args = parser.parse_args()
 
