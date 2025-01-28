@@ -53,3 +53,9 @@ class PlexInfo:
                                 'title': media.title,
                             }
         return None
+
+def plex_update_libraries():
+    """Tell the Plex server to update its libraries"""
+    plex = PlexServer(PLEX_SERVER_BASE_URL, PLEX_ACESS_TOKEN)
+    plex.library.update()
+    return

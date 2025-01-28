@@ -1,8 +1,8 @@
 import os
 import json
 import argparse
-import re
 from utils.plex_server_utilities import PlexInfo
+from utils.plex_server_utilities import plex_update_libraries
 from utils.file_management_helpers import *
 
 def update_episode_data(directory, json_file, do_recursive=False):
@@ -54,6 +54,9 @@ def main(args):
 
     print("Updating episode information in Plex. . .")
     update_episode_data(directory, json_file, do_recursive=do_recursive)
+
+    # Update the Plex libraries
+    plex_update_libraries()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='updateepisodedata', description="Update episode data in Plex from JSON file.")

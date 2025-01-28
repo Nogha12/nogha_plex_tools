@@ -5,6 +5,7 @@ import subprocess
 from shutil import copyfile
 from utils.file_management_helpers import *
 from utils.plex_server_utilities import PlexInfo
+from utils.plex_server_utilities import plex_update_libraries
 from utils.prompt_helpers import *
 from edit_tracks_properties import update_track_properties
 
@@ -366,6 +367,9 @@ def main(args):
     force_language_prompt = args.force_language_prompt
     ask_for_additional_flags = args.prompt_additional_tags
     subtitles_delay = args.delay_subtitles
+
+    # Update the Plex libraries
+    plex_update_libraries()
 
     # mkv_files_to_modify = get_matching_files_from_directory(directory)
     main_files = get_matching_files_from_directory(directory)

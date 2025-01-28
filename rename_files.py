@@ -2,6 +2,7 @@ import os
 import re
 import argparse
 from utils.plex_server_utilities import PlexInfo
+from utils.plex_server_utilities import plex_update_libraries
 from utils.file_management_helpers import *
 
 # Invalid characters for Windows filenames
@@ -154,6 +155,9 @@ def main(args):
     directory = args.directory
     do_recursive = args.recursive
 
+    # Update the Plex libraries
+    plex_update_libraries()
+
     # Get the paths of all MKV files in the directory along with relevant information
     print(f"Scanning .mkv files in {directory}. . .")
     files_info = get_files_information(directory, do_recursive=do_recursive)
@@ -178,7 +182,11 @@ def main(args):
         else:
             print(f'Name contains invalid characters. Please avoid using {invalid_chars}.')
     
+    # Perform the renaming
     rename_files(files_info, series, encoder)
+
+    # Update the Plex libraries
+    plex_update_libraries()
 
     print("Done!")
     return

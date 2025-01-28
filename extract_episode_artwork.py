@@ -63,6 +63,9 @@ def main(args):
     directory = args.directory
     get_season_artwork = args.season
 
+    # Update the Plex libraries
+    plex_update_libraries()
+
     if get_season_artwork:
         print("Extracting season artwork. . .")
         extract_season_artwork(directory)
