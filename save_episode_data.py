@@ -2,6 +2,7 @@ import os
 import json
 import argparse
 from utils.plex_server_utilities import PlexInfo
+from utils.plex_server_utilities import plex_update_libraries
 from utils.file_management_helpers import *
 
 def save_episode_data(directory):
@@ -25,6 +26,9 @@ def save_episode_data(directory):
 
 def main(args):
     directory = args.directory
+
+    # Update the Plex libraries
+    plex_update_libraries()
 
     print("Getting episode information from Plex and saving. . .")
     save_episode_data(directory)
