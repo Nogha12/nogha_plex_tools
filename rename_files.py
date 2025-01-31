@@ -26,7 +26,7 @@ def is_valid_resolution(text):
     return bool(pattern.match(text))
 
 def is_valid_codec(text):
-    known_codecs = ["HEVC", "AV1", "H.264", "MPEG-4p2"] # add more as needed
+    known_codecs = ["HEVC", "AV1", "H.264", "MPEG-4p2", "VP9"] # add more as needed
     return text in known_codecs
 
 def rename_files(episode_files_data, series_name, encoder_name):
@@ -35,6 +35,10 @@ def rename_files(episode_files_data, series_name, encoder_name):
     # Loop through the files in the directory
     for file_info in episode_files_data:
         file_path = file_info['file_path']
+
+        # Get the file extension
+        file_extension = os.path.splitext(file_path)[1]
+
         # Construct the SXXEXX identifier with the season and episode information
         se_identifier = f"S{file_info['season']:02}E{file_info['episode']:02}"
 
@@ -84,7 +88,7 @@ def rename_files(episode_files_data, series_name, encoder_name):
             raise RuntimeError
 
         # Construct the new filename
-        output_file_name = f"{series_name} - {se_identifier} - {title} [{resolution}][{codec}][{encoder_name}].mkv"
+        output_file_name = f"{series_name} - {se_identifier} - {title} [{resolution}][{codec}][{encoder_name}].{file_extension}"
 
         # Get full path
         dir_path = os.path.dirname(file_path)
