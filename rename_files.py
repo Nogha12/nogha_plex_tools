@@ -38,6 +38,8 @@ def rename_files(episode_files_data, series_name, encoder_name):
 
         # Get the file extension
         file_extension = os.path.splitext(file_path)[1]
+        if file_extension.startswith('.'):
+            file_extension = file_extension[1:]
 
         # Construct the SXXEXX identifier with the season and episode information
         se_identifier = f"S{file_info['season']:02}E{file_info['episode']:02}"
