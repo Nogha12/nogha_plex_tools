@@ -32,6 +32,7 @@ def is_muxable_extension(file_extension):
         "av1",
         "mp4",
         "mkv",
+        "mka"
         # Add more mappings as needed
     ]
 
