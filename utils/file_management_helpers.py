@@ -108,6 +108,7 @@ def get_tracks_info(file_path, file_id=0):
                 'flag_visual_impaired': track['properties'].get('flag_visual_impaired', False),
                 'flag_text_descriptions': track['properties'].get('flag_text_descriptions', False),
                 'flag_commentary': track['properties'].get('flag_commentary', False),
+                'track_delay': 0,  # Default delay is 0 ms
                 'track_name': track['properties'].get('track_name', 'N/A')
             }
             tracks_info.append(track_info)
