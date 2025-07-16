@@ -31,6 +31,10 @@ def is_valid_codec(text):
 
 def rename_files(episode_files_data, series_name, encoder_name):
     renaming_is_approved = False
+    spacedashspace_replacement_prompted = False
+    spacedashspace_replacement_approved = False
+    colon_replacement_prompted = False
+    colon_replacement_approved = False
 
     # Loop through the files in the directory
     for file_info in episode_files_data:
@@ -55,6 +59,26 @@ def rename_files(episode_files_data, series_name, encoder_name):
 
         # Replace any instances of the literal string ' / ' with '--'
         title = title.replace(' / ', '--')
+
+        if not spacedashspace_replacement_prompted:
+            user_input = input("Replace all instances of ' - ' in titles with '--'? (type 'y' or 'yes'): ").strip().lower()
+            spacedashspace_replacement_prompted = True
+            if user_input in ['y', 'yes']:
+                spacedashspace_replacement_approved = True
+
+        if not colon_replacement_prompted:
+            user_input = input("Delete colons (':') and the text that preceds them? (type 'y' or 'yes'): ").strip().lower()
+            colon_replacement_prompted = True
+            if user_input in ['y', 'yes']:
+                colon_replacement_approved = True
+
+        if ' - ' in title:
+            if spacedashspace_replacement_approved:
+                title = title.replace(' - ', '--')
+
+        if ':' in title:
+            if colon_replacement_approved:
+                title = title.split(':', 1)[1].strip()
 
         if not is_valid_title(title):
             print(f"Title \"{title}\" contains characters not valid for a file name or contains a space-dash-space. Manual entry required.")
