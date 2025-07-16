@@ -97,8 +97,8 @@ def prompt_for_tracks_languages(tracks_info, force_language_prompt=False):
     """Ask the user to give languages tracks."""
     for track in tracks_info:
         if force_language_prompt or track['language'] == 'und':
+            list_tracks([track])
             while True:
-                list_tracks([track])
                 language = input("Input a LANGUAGE for the above track (press enter to skip): ").strip()
                 if language == '':
                     break
@@ -108,4 +108,21 @@ def prompt_for_tracks_languages(tracks_info, force_language_prompt=False):
                 else:
                     print("Please input a valid 3-letter language code (e.g. 'eng' or 'jpn').")
                     continue
+    return tracks_info
+
+def prompt_for_tracks_delays(tracks_info):
+    """Ask the user to give delays to each track."""
+    for track in tracks_info:
+        list_tracks([track])
+        while True:
+            delay_input = input("Input a DELAY in milliseconds for the above track (press enter to skip): ").strip()
+            if delay_input == '':
+                break
+            try:
+                delay = int(delay_input)
+                track['track_delay'] = delay
+                break
+            except ValueError:
+                print("Please input a valid integer for the delay.")
+                continue
     return tracks_info

@@ -77,7 +77,7 @@ def prompt_for_tracks_order(tracks_info, enforce_track=True):
 
     return reordered_tracks
 
-def prompt_for_new_tracks_info(list_of_tracks_info, force_language_prompt=False, ask_for_additional_flags=False):
+def prompt_for_new_tracks_info(list_of_tracks_info, force_language_prompt=False, ask_for_additional_flags=False, ask_for_delays=False):
     """Ask the user for the new order of tracks and which tracks should be default or forced."""
     # Split the tracks_info into video, audio, subtitles, and other
     video_tracks_info = []
@@ -127,6 +127,9 @@ def prompt_for_new_tracks_info(list_of_tracks_info, force_language_prompt=False,
         video_tracks_info[0]['language'] = 'und'
     video_tracks_info = prompt_for_tracks_names(video_tracks_info)
 
+    # NOTE: prompt_for_tracks_delays() is called in an if-statement because it is not always needed, while
+    # prompt_for_tracks_languages() is not because it checks for tracks with 'und' language even if force_language_prompt is False
+
     # AUDIO TRACKS
     # Prompt for audio order and default/forced track
     print("\nAudio tracks:")
@@ -135,6 +138,8 @@ def prompt_for_new_tracks_info(list_of_tracks_info, force_language_prompt=False,
     list_tracks(audio_tracks_info)
     audio_tracks_info = prompt_for_tracks_flags(audio_tracks_info, enforce_default=True, ask_for_forced=False, ask_for_additional_audio_flags=ask_for_additional_flags)
     audio_tracks_info = prompt_for_tracks_languages(audio_tracks_info, force_language_prompt=force_language_prompt)
+    if ask_for_delays:
+        audio_tracks_info = prompt_for_tracks_delays(audio_tracks_info)
     audio_tracks_info = prompt_for_tracks_names(audio_tracks_info)
 
     # SUBTITLES TRACKS
@@ -146,6 +151,8 @@ def prompt_for_new_tracks_info(list_of_tracks_info, force_language_prompt=False,
         list_tracks(subtitles_tracks_info)
         subtitles_tracks_info = prompt_for_tracks_flags(subtitles_tracks_info, enforce_default=False, ask_for_forced=True, ask_for_additional_subtitles_flags=ask_for_additional_flags)
         subtitles_tracks_info = prompt_for_tracks_languages(subtitles_tracks_info, force_language_prompt=force_language_prompt)
+        if ask_for_delays:
+            subtitles_tracks_info = prompt_for_tracks_delays(subtitles_tracks_info)
         subtitles_tracks_info = prompt_for_tracks_names(subtitles_tracks_info)
 
     updated_tracks_info = video_tracks_info + audio_tracks_info + subtitles_tracks_info + other_tracks_info
@@ -181,7 +188,7 @@ def add_matches_from_second_directory(file_matches, second_directory):
 
     return file_matches
 
-def mux_files(file_paths, tracks_info, output_path, attachments=[], subtitles_delay=0):
+def mux_files(file_paths, tracks_info, output_path, attachments=[]):
     """Remux the files to reorder tracks using mkvmerge."""
     # Separate the different types of tracks
     video_tracks_info = [track for track in tracks_info if track['type'] == 'video']
@@ -211,17 +218,19 @@ def mux_files(file_paths, tracks_info, output_path, attachments=[], subtitles_de
             command += f' --no-video'
         if audio_tracks_ids:
             command += f' --audio-tracks {audio_tracks_ids}'
+            for track in audio_tracks_info:
+                if track['file_id'] == file_id and track["track_delay"] != 0:
+                    command += f' --sync {track["id"]}:{track["track_delay"]}'
         else:
             command += f' --no-audio'
         if subtitles_tracks_ids:
             command += f' --subtitle-tracks {subtitles_tracks_ids}'
-            if subtitles_delay != 0:
-                for track in subtitles_tracks_info:
-                    if track['file_id'] == file_id:
-                        command += f' --sync {track["id"]}:{subtitles_delay}'
-                        command += f' --chapter-sync {subtitles_delay}'
+            for track in subtitles_tracks_info:
+                if track['file_id'] == file_id and track["track_delay"] != 0:
+                    command += f' --sync {track["id"]}:{track["track_delay"]}'
         else:
             command += f' --no-subtitles'
+        # command += f' --chapter-sync {subtitles_delay}'
         command += f' "{file_path}"'
     
     # Run the command
@@ -234,7 +243,7 @@ def get_font_attachments(directory):
             font_attchments.append(os.path.join(directory, file))
     return font_attchments
 
-def mux_files_into_mkv(file_matches, attachments=[], force_language_prompt=False, ask_for_additional_flags=False, subtitles_delay=0):
+def mux_files_into_mkv(file_matches, attachments=[], force_language_prompt=False, ask_for_additional_flags=False, ask_for_delays=False):
     first_matching_files = file_matches[0]
 
     # This is a list of tracks info for all the tracks to merge
@@ -245,7 +254,12 @@ def mux_files_into_mkv(file_matches, attachments=[], force_language_prompt=False
         first_matching_files_tracks_infos.append(tracks_info)
     
     # Prompt the user to give the new order and default/forced status for the tracks
-    tracks_template = prompt_for_new_tracks_info(first_matching_files_tracks_infos, force_language_prompt=force_language_prompt, ask_for_additional_flags=ask_for_additional_flags)
+    tracks_template = prompt_for_new_tracks_info(
+        first_matching_files_tracks_infos, 
+        force_language_prompt=force_language_prompt, 
+        ask_for_additional_flags=ask_for_additional_flags, 
+        ask_for_delays=ask_for_delays
+    )
     
     print("\nUsing the following template to update tracks info in all .mkv files:")
     for track in tracks_template:
@@ -268,11 +282,8 @@ def mux_files_into_mkv(file_matches, attachments=[], force_language_prompt=False
         output_path = os.path.join(new_dir, os.path.basename(main_file_path))
         
         # Check if remuxing is needed
-        if (
-            (get_identifying_info_from_tracks_info(tracks_template) != get_identifying_info_from_tracks_info(get_tracks_info(file_paths[0]))) 
-            or (subtitles_delay != 0)
-        ):
-            mux_files(file_paths, tracks_template, output_path, attachments=attachments, subtitles_delay=subtitles_delay)
+        if (get_identifying_info_from_tracks_info(tracks_template) != get_identifying_info_from_tracks_info(get_tracks_info(file_paths[0]))):
+            mux_files(file_paths, tracks_template, output_path, attachments=attachments)
         else:
             # If no reordering is needed, just copy the file
             copyfile(file_paths[0], output_path)
@@ -367,7 +378,7 @@ def main(args):
     second_directory = args.second_directory
     force_language_prompt = args.force_language_prompt
     ask_for_additional_flags = args.prompt_additional_tags
-    subtitles_delay = args.delay_subtitles
+    ask_for_delays = args.add_delays
 
     # Update the Plex libraries
     plex_update_libraries()
@@ -380,8 +391,7 @@ def main(args):
     if second_directory:
         file_matches = add_matches_from_second_directory(file_matches, second_directory)
 
-    mux_files_into_mkv(file_matches, attachments=attachments, force_language_prompt=force_language_prompt, ask_for_additional_flags=ask_for_additional_flags, subtitles_delay=subtitles_delay)
-
+    mux_files_into_mkv(file_matches, attachments=attachments, force_language_prompt=force_language_prompt, ask_for_additional_flags=ask_for_additional_flags, ask_for_delays=ask_for_delays)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='mkvrearrange', description="Rearrange and set the flags of the tracks in all the similar MKV files in the directory.")
@@ -389,7 +399,7 @@ if __name__ == "__main__":
     parser.add_argument('-d2', '--second-directory', default=None, help='Directory of numbered MKV files to merge')
     parser.add_argument('-l', '--force-language-prompt', action='store_true', help='Forces the program to prompt the user to input languages for each track.')
     parser.add_argument('-a', '--prompt-additional-tags', action='store_true', help='Forces the program to prompt the user to input all optional tags for each track.')
-    parser.add_argument('-d', '--delay-subtitles', default=0, type=int, help='Delay the subtitles by the given number of milliseconds.')
+    parser.add_argument('-d', '--add-delays', action='store_true', help='Prompt the user to input delays for subtitle and audio tracks. Accepts positive and negative numbers of milliseconds.')
     
     args = parser.parse_args()
     main(args)
