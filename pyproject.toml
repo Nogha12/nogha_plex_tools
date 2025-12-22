@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plex-tools"
+version = "0.1.0"
+description = "Tools for managing Plex media"
+requires-python = ">=3.8"
+
+dependencies = []
+
+[project.scripts]
+plex-tools = "plex_tools.cli.main:main"
+
+[tool.setuptools]
+packages = ["plex_tools"]
+
+[tool.setuptools.package-dir]
+"" = "src"

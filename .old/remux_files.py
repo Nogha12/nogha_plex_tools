@@ -9,9 +9,6 @@ from utils.plex_server_utilities import plex_update_libraries
 from utils.prompt_helpers import *
 from edit_tracks_properties import update_track_properties
 
-# Global variables
-plex_agent = None
-
 def is_muxable_extension(file_extension):
     file_extension = re.sub(r'\.', '', file_extension).strip()
     # Dictionary mapping codecs to their corresponding file extensions
@@ -319,6 +316,7 @@ def string_to_match_name(string_to_convert):
 
 def get_tracks_to_mux(main_files):
     """Return a list of lists of files that should be muxed together."""
+    plex_agent = PlexInfo()
     file_matches = []
     for file in main_files:
         directory = os.path.dirname(file)
@@ -327,13 +325,13 @@ def get_tracks_to_mux(main_files):
         match_name = path_to_match_name(file)
 
         # Check if the file exists in Plex and get the episode number
-        try:
-            plex_info = plex_agent.get_plex_info(file)
-            if plex_info:
+        plex_info = plex_agent.get_plex_info(file)
+        if plex_info:
+            try:
                 episode_number = int(plex_info['episode'])
-            else:
+            except KeyError:
                 episode_number = None
-        except:
+        else:
             episode_number = None
 
         matching_files = []
@@ -383,16 +381,10 @@ def main(args):
     ask_for_delays = args.add_delays
 
     # Update the Plex libraries
-    try:
-        plex_agent = PlexInfo()
-        plex_update_libraries()
-    except:
-        print("Could not connect to Plex server to update libraries. Continuing without updating.")
+    plex_update_libraries()
 
+    # mkv_files_to_modify = get_matching_files_from_directory(directory)
     main_files = get_matching_files_from_directory(directory)
-    if not main_files or len(main_files) < 1:
-        print("No files found to process. Aborting.")
-        return
     file_matches = get_tracks_to_mux(main_files)
     attachments = get_font_attachments(directory)
 

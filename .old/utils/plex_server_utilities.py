@@ -1,21 +1,8 @@
 import os
-from pathlib import Path
-from dotenv import load_dotenv
 from plexapi.server import PlexServer
 
-# Load environment variables from .env file
-env_path = Path(__file__).parent.parent / '.env'
-load_dotenv(env_path)
-
-PLEX_SERVER_BASE_URL = os.getenv('PLEX_SERVER_URL', 'http://127.0.0.1:32400')
-PLEX_ACESS_TOKEN = os.getenv('PLEX_ACCESS_TOKEN')
-
-if not PLEX_ACESS_TOKEN:
-    raise ValueError(
-        "PLEX_ACCESS_TOKEN not found. Please create a .env file in the project root with:\n"
-        "PLEX_SERVER_URL=http://127.0.0.1:32400\n"
-        "PLEX_ACCESS_TOKEN=your_token_here"
-    )
+PLEX_SERVER_BASE_URL = 'http://127.0.0.1:32400'
+PLEX_ACESS_TOKEN = '***REMOVED***'
 
 class PlexInfo:
     def __init__(self):
